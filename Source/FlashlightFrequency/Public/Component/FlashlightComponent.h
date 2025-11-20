@@ -1,0 +1,83 @@
+// Fill out your copyright notice in the Description page of Project Settings.
+
+#pragma once
+
+#include "CoreMinimal.h"
+#include "Components/ActorComponent.h"
+#include "Kismet/KismetSystemLibrary.h"
+#include "Public/Actor/FlashlightItem.h"
+#include "FlashlightComponent.generated.h"
+
+
+class AFlashlightFrequencyCharacter;
+
+UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
+class FLASHLIGHTFREQUENCY_API UFlashlightComponent : public UActorComponent
+{
+	GENERATED_BODY()
+
+public:
+	explicit UFlashlightComponent(const FObjectInitializer& ObjectInitializer);
+
+	virtual void BeginPlay() override;
+	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
+	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
+
+	UPROPERTY(ReplicatedUsing=OnRep_FlashlightColor, BlueprintReadOnly, Category = "Flashlight")
+	EFlashlightColor CurrentColor = EFlashlightColor::Red;
+
+	UFUNCTION(BlueprintCallable, Category = "Flashlight")
+	void CycleFlashlightColor();
+
+	UFUNCTION(BlueprintCallable, Category = "Flashlight")
+	void SetFlashlightColor(EFlashlightColor NewColor);
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Flashlight")
+	float ConeRadius = 30.f; // radius of the sweep
+
+	UFUNCTION(Server, Reliable)
+	void Server_ChangeCameraSettings(ACharacter* Actor, bool bCameraYawRotation);
+
+	UPROPERTY(BlueprintReadWrite, Category = "Flashlight")
+	FVector FlashlightElbowTargetWS;
+
+	UPROPERTY(BlueprintReadWrite, Category = "Flashlight")
+	FVector FlashlightTargetWS;
+
+	UPROPERTY(BlueprintReadWrite, Category = "Flashlight")
+	FVector HandEffectorWS;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Flashlight")
+	float ArmLength = 55.f;
+
+	void SetPointingFlashlight(bool bState);
+
+protected:
+	UPROPERTY()
+	AFlashlightItem* CurrentRevealedItem = nullptr;
+
+	AFlashlightItem* TraceForItem();
+
+	UFUNCTION(Server, Reliable)
+	void HandleLocalTrace();
+
+	UFUNCTION()
+	void OnRep_FlashlightColor();
+
+	UFUNCTION(Server, Reliable)
+	void Server_SetFlashlightColor(EFlashlightColor NewColor);
+	
+	void ApplyFlashlightColor(EFlashlightColor NewColor);
+
+	AFlashlightFrequencyCharacter* GetOwnerPawn() const;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Debug")
+	TEnumAsByte<EDrawDebugTrace::Type> DebugTraceType = EDrawDebugTrace::ForDuration;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Debug")
+	float DebugDrawTime = 2.f;
+
+private:
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Actions", meta = (AllowPrivateAccess = "true"))
+	bool bPointingFlashlight;
+};
