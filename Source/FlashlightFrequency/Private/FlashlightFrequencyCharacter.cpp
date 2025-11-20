@@ -127,6 +127,9 @@ void AFlashlightFrequencyCharacter::OnCycleFlashlight()
 void AFlashlightFrequencyCharacter::PointFlashlight(const bool bState)
 {
 	FlashlightComponent->SetPointingFlashlight(bState);
+	
+	if (!HasAuthority())
+		FlashlightComponent->Server_SetPointingFlashlight(bState);
 }
 
 void AFlashlightFrequencyCharacter::DoMove(float Right, float Forward)

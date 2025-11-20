@@ -38,18 +38,21 @@ public:
 	UFUNCTION(Server, Reliable)
 	void Server_ChangeCameraSettings(ACharacter* Actor, bool bCameraYawRotation);
 
-	UPROPERTY(BlueprintReadWrite, Category = "Flashlight")
+	UPROPERTY(Replicated, BlueprintReadWrite, Category = "Flashlight")
 	FVector FlashlightElbowTargetWS;
 
-	UPROPERTY(BlueprintReadWrite, Category = "Flashlight")
+	UPROPERTY(Replicated, BlueprintReadWrite, Category = "Flashlight")
 	FVector FlashlightTargetWS;
 
-	UPROPERTY(BlueprintReadWrite, Category = "Flashlight")
+	UPROPERTY(Replicated, BlueprintReadWrite, Category = "Flashlight")
 	FVector HandEffectorWS;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Flashlight")
 	float ArmLength = 55.f;
 
+	UFUNCTION(Server, Reliable)
+	void Server_SetPointingFlashlight(bool bState);
+	
 	void SetPointingFlashlight(bool bState);
 
 protected:
@@ -78,6 +81,6 @@ protected:
 	float DebugDrawTime = 2.f;
 
 private:
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Actions", meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadWrite, Category = "Actions", meta = (AllowPrivateAccess = "true"))
 	bool bPointingFlashlight;
 };

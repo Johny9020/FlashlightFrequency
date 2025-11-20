@@ -25,6 +25,11 @@ void UFlashlightComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>&
     Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
     DOREPLIFETIME(UFlashlightComponent, CurrentColor);
+    DOREPLIFETIME(ThisClass, bPointingFlashlight);
+
+    DOREPLIFETIME(ThisClass, FlashlightTargetWS);
+    DOREPLIFETIME(ThisClass, FlashlightElbowTargetWS);
+    DOREPLIFETIME(ThisClass, HandEffectorWS);
 }
 
 void UFlashlightComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
@@ -164,6 +169,11 @@ void UFlashlightComponent::HandleLocalTrace_Implementation()
             CurrentRevealedItem = nullptr;
         }
     }
+}
+
+void UFlashlightComponent::Server_SetPointingFlashlight_Implementation(bool bState)
+{
+    SetPointingFlashlight(bState);
 }
 
 void UFlashlightComponent::SetPointingFlashlight(bool bState)
