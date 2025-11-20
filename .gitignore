@@ -72,3 +72,7 @@ Plugins/**/Intermediate/*
 
 # Cache files for the editor to use
 DerivedDataCache/*
+/.idea
+.idea/.idea.FlashlightFrequency.dir/.idea/workspace.xml
+/.idea/.idea.FlashlightFrequency.dir/.idea
+/.idea/.idea.FlashlightFrequency.dir
