@@ -1,5 +1,4 @@
 #include "Component/FlashlightComponent.h"
-#include "CollisionLibrary.h"
 #include "FlashlightFrequencyCharacter.h"
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
@@ -27,9 +26,9 @@ void UFlashlightComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>&
     DOREPLIFETIME(UFlashlightComponent, CurrentColor);
     DOREPLIFETIME(ThisClass, bPointingFlashlight);
 
-    DOREPLIFETIME(ThisClass, FlashlightTargetWS);
-    DOREPLIFETIME(ThisClass, FlashlightElbowTargetWS);
-    DOREPLIFETIME(ThisClass, HandEffectorWS);
+    DOREPLIFETIME_CONDITION(ThisClass, ReplicatedFlashlightTargetWS, COND_SkipOwner);
+    DOREPLIFETIME_CONDITION(ThisClass, ReplicatedFlashlightElbowTargetWS, COND_SkipOwner);
+    DOREPLIFETIME_CONDITION(ThisClass, ReplicatedHandEffectorWS, COND_SkipOwner);
 }
 
 void UFlashlightComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
@@ -41,6 +40,9 @@ void UFlashlightComponent::TickComponent(float DeltaTime, ELevelTick TickType, F
     {
         return;
     }
+
+    if (!OwnerPawn->IsLocallyControlled())
+        return;
 
     if (!bPointingFlashlight)
         return;
@@ -55,7 +57,9 @@ void UFlashlightComponent::TickComponent(float DeltaTime, ELevelTick TickType, F
     const float SideOffset = 25.f;
     const float DownOffset = 10.f;
 
-    FlashlightElbowTargetWS = UpperArmLocation + Right * SideOffset - Up * DownOffset;
+    LocalFlashlightElbowTargetWS = UpperArmLocation + Right * SideOffset - Up * DownOffset;
+
+    Server_SetReplicatedValues(LocalFlashlightTargetWS, LocalFlashlightElbowTargetWS, LocalHandEffectorWS);
 }
 
 void UFlashlightComponent::CycleFlashlightColor()
@@ -142,7 +146,7 @@ void UFlashlightComponent::OnRep_FlashlightColor()
 }
 
 /** Client-only: tracing and reveal logic */
-void UFlashlightComponent::HandleLocalTrace_Implementation()
+void UFlashlightComponent::HandleLocalTrace()
 {
     AFlashlightItem* HitItem = TraceForItem();
 
@@ -212,6 +216,13 @@ void UFlashlightComponent::SetPointingFlashlight(bool bState)
     bPointingFlashlight = bState;
 }
 
+void UFlashlightComponent::Server_SetReplicatedValues_Implementation(const FVector& TargetWS, const FVector& ElbowWS, const FVector& HandWS)
+{
+    ReplicatedFlashlightTargetWS = TargetWS;
+    ReplicatedFlashlightElbowTargetWS = ElbowWS;
+    ReplicatedHandEffectorWS = HandWS;
+}
+
 void UFlashlightComponent::Server_ChangeCameraSettings_Implementation(ACharacter* Actor, bool bCameraYawRotation)
 {
     Actor->bUseControllerRotationPitch = !bCameraYawRotation;
@@ -239,13 +250,13 @@ AFlashlightItem* UFlashlightComponent::TraceForItem()
     FRotator DirRot = FRotator(ComponentRotation.Pitch + 5, ComponentRotation.Yaw, ComponentRotation.Roll);
     FVector End = Start + (DirRot.Quaternion().GetForwardVector() * 800.f);
 
-    FlashlightTargetWS = End;
+    LocalFlashlightTargetWS = End;
 
     FVector ShoulderWS = OwnerPawn->GetMesh()->GetBoneLocation(TEXT("upperarm_r"));
     FVector AimDir = (End - ShoulderWS).GetSafeNormal();
 
     
-    HandEffectorWS = ShoulderWS + AimDir * ArmLength;
+    LocalHandEffectorWS = ShoulderWS + AimDir * ArmLength;
 
     TArray<FHitResult> Hits;
     TArray<AActor*> HitActors;

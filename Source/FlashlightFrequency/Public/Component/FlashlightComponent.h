@@ -38,14 +38,23 @@ public:
 	UFUNCTION(Server, Reliable)
 	void Server_ChangeCameraSettings(ACharacter* Actor, bool bCameraYawRotation);
 
-	UPROPERTY(Replicated, BlueprintReadWrite, Category = "Flashlight")
-	FVector FlashlightElbowTargetWS;
+	UPROPERTY(BlueprintReadWrite, Category = "Flashlight")
+	FVector LocalFlashlightElbowTargetWS;
+
+	UPROPERTY(BlueprintReadWrite, Category = "Flashlight")
+	FVector LocalFlashlightTargetWS;
+
+	UPROPERTY(BlueprintReadWrite, Category = "Flashlight")
+	FVector LocalHandEffectorWS;
 
 	UPROPERTY(Replicated, BlueprintReadWrite, Category = "Flashlight")
-	FVector FlashlightTargetWS;
+	FVector ReplicatedFlashlightElbowTargetWS;
 
 	UPROPERTY(Replicated, BlueprintReadWrite, Category = "Flashlight")
-	FVector HandEffectorWS;
+	FVector ReplicatedFlashlightTargetWS;
+
+	UPROPERTY(Replicated, BlueprintReadWrite, Category = "Flashlight")
+	FVector ReplicatedHandEffectorWS;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Flashlight")
 	float ArmLength = 55.f;
@@ -55,13 +64,15 @@ public:
 	
 	void SetPointingFlashlight(bool bState);
 
+	UFUNCTION(Server, Unreliable)
+	void Server_SetReplicatedValues(const FVector& TargetWS, const FVector& ElbowWS, const FVector& HandWS);
+
 protected:
 	UPROPERTY()
 	AFlashlightItem* CurrentRevealedItem = nullptr;
 
 	AFlashlightItem* TraceForItem();
 
-	UFUNCTION(Server, Reliable)
 	void HandleLocalTrace();
 
 	UFUNCTION()
