@@ -11,6 +11,8 @@
 
 class AFlashlightFrequencyCharacter;
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnFlashlightColorChangeSignature, EFlashlightColor, NewColor);
+
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class FLASHLIGHTFREQUENCY_API UFlashlightComponent : public UActorComponent
 {
@@ -22,6 +24,8 @@ public:
 	virtual void BeginPlay() override;
 	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
+	
+	FOnFlashlightColorChangeSignature OnFlashlightColorChangeDelegate;
 
 	UPROPERTY(ReplicatedUsing=OnRep_FlashlightColor, BlueprintReadOnly, Category = "Flashlight")
 	EFlashlightColor CurrentColor = EFlashlightColor::Red;

@@ -2,6 +2,7 @@
 #include "FlashlightFrequencyCharacter.h"
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
+#include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/KismetSystemLibrary.h"
 #include "Net/UnrealNetwork.h"
 
@@ -133,8 +134,7 @@ void UFlashlightComponent::ApplyFlashlightColor(EFlashlightColor NewColor)
 
     CurrentColor = NewColor;
 
-    // Here you can update light color, post-process, etc.
-    // e.g., notify blueprint or change a light component attached to the owner.
+    OnFlashlightColorChangeDelegate.Broadcast(NewColor);
     OnRep_FlashlightColor();
 }
 
@@ -188,11 +188,11 @@ void UFlashlightComponent::SetPointingFlashlight(bool bState)
         Owner->bUseControllerRotationPitch = false;
         Owner->bUseControllerRotationYaw = true;
         Owner->bUseControllerRotationRoll = false;
+        Owner->GetCharacterMovement()->bOrientRotationToMovement = false;
         
         if (!Owner->HasAuthority())
         {
             Server_ChangeCameraSettings(Owner, bState);
-            UE_LOG(LogTemp, Warning, TEXT("We are running a server function"));
         }
     }else
     {
@@ -200,10 +200,11 @@ void UFlashlightComponent::SetPointingFlashlight(bool bState)
         Owner->bUseControllerRotationYaw = false;
         Owner->bUseControllerRotationRoll = false;
         
+        Owner->GetCharacterMovement()->bOrientRotationToMovement = true;
+        
         if (!Owner->HasAuthority())
         {
             Server_ChangeCameraSettings(Owner, bState);
-            UE_LOG(LogTemp, Warning, TEXT("We are running a server function"));
         }
 
         if (CurrentRevealedItem)
@@ -228,6 +229,8 @@ void UFlashlightComponent::Server_ChangeCameraSettings_Implementation(ACharacter
     Actor->bUseControllerRotationPitch = !bCameraYawRotation;
     Actor->bUseControllerRotationYaw = bCameraYawRotation;
     Actor->bUseControllerRotationRoll = !bCameraYawRotation;
+    
+    Actor->GetCharacterMovement()->bOrientRotationToMovement = !bCameraYawRotation;
 }
 
 AFlashlightItem* UFlashlightComponent::TraceForItem()
@@ -262,7 +265,9 @@ AFlashlightItem* UFlashlightComponent::TraceForItem()
     TArray<AActor*> HitActors;
     HitActors.Add(OwnerPawn);
 
-    bool bAnyHits = UKismetSystemLibrary::SphereTraceMulti(this, Start, End, ConeRadius, TraceTypeQuery1, true, HitActors, DebugTraceType, Hits, true, FColor::Red, FColor::Green, DebugDrawTime);
+    ETraceTypeQuery FlashlightTrace = UEngineTypes::ConvertToTraceType(ECC_GameTraceChannel1);
+
+    bool bAnyHits = UKismetSystemLibrary::SphereTraceMulti(this, Start, End, ConeRadius, FlashlightTrace, true, HitActors, DebugTraceType, Hits, true, FColor::Red, FColor::Green, DebugDrawTime);
     
 
     // -------- Pick best AFlashlightItem in the cone --------
