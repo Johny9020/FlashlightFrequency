@@ -48,8 +48,3 @@ void AFlashlight::BeginPlay()
 	}
 }
 
-void AFlashlight::FlashlightColorChanged(const EFlashlightColor NewColor)
-{
-	UE_LOG(LogTemp, Warning, TEXT("New Color: %hhd"), NewColor);
-}
-

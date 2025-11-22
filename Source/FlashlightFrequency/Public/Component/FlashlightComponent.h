@@ -3,12 +3,13 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "ColorTypes.h"
 #include "Components/ActorComponent.h"
 #include "Kismet/KismetSystemLibrary.h"
-#include "Public/Actor/FlashlightItem.h"
 #include "FlashlightComponent.generated.h"
 
 
+class AFlashlightItem;
 class AFlashlightFrequencyCharacter;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnFlashlightColorChangeSignature, EFlashlightColor, NewColor);

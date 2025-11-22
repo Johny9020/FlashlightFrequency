@@ -3,19 +3,11 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Component/FlashlightComponent.h"
 #include "GameFramework/Actor.h"
 #include "FlashlightItem.generated.h"
 
 class UWidgetComponent;
-
-UENUM(BlueprintType)
-enum class EFlashlightColor : uint8
-{
-	Red,
-	Green,
-	Blue,
-	UV
-};
 
 UCLASS()
 class FLASHLIGHTFREQUENCY_API AFlashlightItem : public AActor

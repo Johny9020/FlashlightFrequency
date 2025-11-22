@@ -7,6 +7,7 @@
 #include "GameFramework/Actor.h"
 #include "Flashlight.generated.h"
 
+class UColorMappingData;
 class USpotLightComponent;
 class UFlashlightComponent;
 
@@ -26,11 +27,14 @@ public:
 
 protected:
 	virtual void BeginPlay() override;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Mappings)
+	TObjectPtr<UColorMappingData> ColorMappingData;
+	
+	UFUNCTION(BlueprintImplementableEvent)
+	void FlashlightColorChanged(EFlashlightColor NewColor);
 
 private:
 	UPROPERTY()
 	TObjectPtr<UFlashlightComponent> FlashlightComponent;
-	
-	UFUNCTION()
-	void FlashlightColorChanged(EFlashlightColor NewColor);
 };
