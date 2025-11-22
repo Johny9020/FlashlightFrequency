@@ -39,9 +39,8 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Flashlight")
 	float ConeRadius = 30.f; // radius of the sweep
-
-	UFUNCTION(Server, Reliable)
-	void Server_ChangeCameraSettings(ACharacter* Actor, bool bCameraYawRotation);
+	
+	void ApplyCameraSettings(bool bState) const;
 
 	UPROPERTY(BlueprintReadWrite, Category = "Flashlight")
 	FVector LocalFlashlightElbowTargetWS;
@@ -95,8 +94,11 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Debug")
 	float DebugDrawTime = 2.f;
+	
+	UFUNCTION()
+	void OnRep_PointingFlashlight() const;
 
 private:
-	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadWrite, Category = "Actions", meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(ReplicatedUsing=OnRep_PointingFlashlight, VisibleAnywhere, BlueprintReadWrite, Category = "Actions", meta = (AllowPrivateAccess = "true"))
 	bool bPointingFlashlight;
 };

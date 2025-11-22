@@ -56,8 +56,8 @@ void UFlashlightComponent::TickComponent(float DeltaTime, ELevelTick TickType, F
     const FVector Right = OwnerPawn->GetActorRightVector();
     const FVector Up = OwnerPawn->GetActorUpVector();
 
-    const float SideOffset = 25.f;
-    const float DownOffset = 10.f;
+    constexpr float SideOffset = 25.f;
+    constexpr float DownOffset = 10.f;
 
     LocalFlashlightElbowTargetWS = UpperArmLocation + Right * SideOffset - Up * DownOffset;
 
@@ -121,6 +121,11 @@ AFlashlightFrequencyCharacter* UFlashlightComponent::GetOwnerPawn() const
     return Cast<AFlashlightFrequencyCharacter>(GetOwner());
 }
 
+void UFlashlightComponent::OnRep_PointingFlashlight() const
+{
+    ApplyCameraSettings(bPointingFlashlight);
+}
+
 void UFlashlightComponent::Server_SetFlashlightColor_Implementation(EFlashlightColor NewColor)
 {
     ApplyFlashlightColor(NewColor);
@@ -178,60 +183,41 @@ void UFlashlightComponent::HandleLocalTrace()
 
 void UFlashlightComponent::Server_SetPointingFlashlight_Implementation(bool bState)
 {
-    SetPointingFlashlight(bState);
+    bPointingFlashlight = bState;
+    ApplyCameraSettings(bState);
 }
 
 void UFlashlightComponent::SetPointingFlashlight(bool bState)
 {
-    auto* Owner = GetOwnerPawn();
-    if (bState)
+    if (!GetOwnerPawn()) return;
+    
+    if (!GetOwnerPawn()->HasAuthority())
     {
-        Owner->bUseControllerRotationPitch = false;
-        Owner->bUseControllerRotationYaw = true;
-        Owner->bUseControllerRotationRoll = false;
-        Owner->GetCharacterMovement()->bOrientRotationToMovement = false;
-        
-        if (!Owner->HasAuthority())
-        {
-            Server_ChangeCameraSettings(Owner, bState);
-        }
-    }else
-    {
-        Owner->bUseControllerRotationPitch = false;
-        Owner->bUseControllerRotationYaw = false;
-        Owner->bUseControllerRotationRoll = false;
-        
-        Owner->GetCharacterMovement()->bOrientRotationToMovement = true;
-        
-        if (!Owner->HasAuthority())
-        {
-            Server_ChangeCameraSettings(Owner, bState);
-        }
-
-        if (CurrentRevealedItem)
-        {
-            CurrentRevealedItem->SetRevealVisible_Local(false);
-            CurrentRevealedItem = nullptr;
-        }
+        Server_SetPointingFlashlight(bState);
     }
     
+    ApplyCameraSettings(bState);
     bPointingFlashlight = bState;
 }
+
+void UFlashlightComponent::ApplyCameraSettings(const bool bState) const
+{
+    auto* Owner = GetOwnerPawn();
+    if (!Owner) return;
+    
+    Owner->bUseControllerRotationPitch = false;
+    Owner->bUseControllerRotationYaw   = bState;
+    Owner->bUseControllerRotationRoll  = false;
+
+    Owner->GetCharacterMovement()->bOrientRotationToMovement = !bState;
+}
+
 
 void UFlashlightComponent::Server_SetReplicatedValues_Implementation(const FVector& TargetWS, const FVector& ElbowWS, const FVector& HandWS)
 {
     ReplicatedFlashlightTargetWS = TargetWS;
     ReplicatedFlashlightElbowTargetWS = ElbowWS;
     ReplicatedHandEffectorWS = HandWS;
-}
-
-void UFlashlightComponent::Server_ChangeCameraSettings_Implementation(ACharacter* Actor, bool bCameraYawRotation)
-{
-    Actor->bUseControllerRotationPitch = !bCameraYawRotation;
-    Actor->bUseControllerRotationYaw = bCameraYawRotation;
-    Actor->bUseControllerRotationRoll = !bCameraYawRotation;
-    
-    Actor->GetCharacterMovement()->bOrientRotationToMovement = !bCameraYawRotation;
 }
 
 AFlashlightItem* UFlashlightComponent::TraceForItem()
@@ -249,15 +235,15 @@ AFlashlightItem* UFlashlightComponent::TraceForItem()
     }
 
     // -------- Get Start + Direction --------
-    FVector Start = OwnerPawn->GetCapsuleComponent()->GetComponentLocation();
-    FRotator ComponentRotation = OwnerPawn->GetFollowCamera()->GetComponentRotation();
-    FRotator DirRot = FRotator(ComponentRotation.Pitch + 5, ComponentRotation.Yaw, ComponentRotation.Roll);
-    FVector End = Start + (DirRot.Quaternion().GetForwardVector() * 800.f);
+    const FVector Start = OwnerPawn->GetCapsuleComponent()->GetComponentLocation();
+    const FRotator ComponentRotation = OwnerPawn->GetFollowCamera()->GetComponentRotation();
+    const FRotator DirRot = FRotator(ComponentRotation.Pitch + 5, ComponentRotation.Yaw, ComponentRotation.Roll);
+    const FVector End = Start + (DirRot.Quaternion().GetForwardVector() * 800.f);
 
     LocalFlashlightTargetWS = End;
 
-    FVector ShoulderWS = OwnerPawn->GetMesh()->GetBoneLocation(TEXT("upperarm_r"));
-    FVector AimDir = (End - ShoulderWS).GetSafeNormal();
+    const FVector ShoulderWS = OwnerPawn->GetMesh()->GetBoneLocation(TEXT("upperarm_r"));
+    const FVector AimDir = (End - ShoulderWS).GetSafeNormal();
 
     
     LocalHandEffectorWS = ShoulderWS + AimDir * ArmLength;
@@ -266,9 +252,9 @@ AFlashlightItem* UFlashlightComponent::TraceForItem()
     TArray<AActor*> HitActors;
     HitActors.Add(OwnerPawn);
 
-    ETraceTypeQuery FlashlightTrace = UEngineTypes::ConvertToTraceType(ECC_GameTraceChannel1);
+    const ETraceTypeQuery FlashlightTrace = UEngineTypes::ConvertToTraceType(ECC_GameTraceChannel1);
 
-    bool bAnyHits = UKismetSystemLibrary::SphereTraceMulti(this, Start, End, ConeRadius, FlashlightTrace, true, HitActors, DebugTraceType, Hits, true, FColor::Red, FColor::Green, DebugDrawTime);
+    UKismetSystemLibrary::SphereTraceMulti(this, Start, End, ConeRadius, FlashlightTrace, true, HitActors, DebugTraceType, Hits, true, FColor::Red, FColor::Green, DebugDrawTime);
     
 
     // -------- Pick best AFlashlightItem in the cone --------
@@ -289,8 +275,7 @@ AFlashlightItem* UFlashlightComponent::TraceForItem()
             continue;
         }
 
-        const float DistSq = (Hit.ImpactPoint - Start).SizeSquared();
-        if (DistSq < BestDistSq)
+        if (const float DistSq = (Hit.ImpactPoint - Start).SizeSquared(); DistSq < BestDistSq)
         {
             BestDistSq = DistSq;
             BestItem   = Item;
