@@ -18,10 +18,7 @@ class FLASHLIGHTFREQUENCY_API AFlashlightAIController : public AAIController
 public:
 	AFlashlightAIController();
 	
-protected:
-	UPROPERTY()
-	TObjectPtr<UBlackboardComponent> BlackboardComponent;
-	
+protected:	
 	UPROPERTY()
 	TObjectPtr<UBehaviorTreeComponent> BehaviorTreeComponent;
 };

@@ -8,8 +8,8 @@
 
 AFlashlightAIController::AFlashlightAIController()
 {
-	BlackboardComponent = CreateDefaultSubobject<UBlackboardComponent>("BlackboardComponent");
-	check(BlackboardComponent);
+	Blackboard = CreateDefaultSubobject<UBlackboardComponent>("BlackboardComponent");
+	check(Blackboard);
 	
 	BehaviorTreeComponent = CreateDefaultSubobject<UBehaviorTreeComponent>("BehaviorTreeComponent");
 	check(BehaviorTreeComponent);

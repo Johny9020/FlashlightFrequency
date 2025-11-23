@@ -4,6 +4,8 @@
 #include "Character/FlashlightEnemy.h"
 
 #include "AI/FlashlightAIController.h"
+#include "BehaviorTree/BehaviorTree.h"
+#include "BehaviorTree/BlackboardComponent.h"
 
 
 // Sets default values
@@ -17,7 +19,13 @@ void AFlashlightEnemy::PossessedBy(AController* NewController)
 {
 	Super::PossessedBy(NewController);
 	
+	if (!HasAuthority())
+		return;
+	
 	AIController = Cast<AFlashlightAIController>(NewController);
+	
+	AIController->GetBlackboardComponent()->InitializeBlackboard(*BehaviorTree->BlackboardAsset);
+	AIController->RunBehaviorTree(BehaviorTree);
 }
 
 // Called when the game starts or when spawned
