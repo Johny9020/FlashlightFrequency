@@ -26,12 +26,19 @@ void AFlashlightEnemy::PossessedBy(AController* NewController)
 	
 	AIController->GetBlackboardComponent()->InitializeBlackboard(*BehaviorTree->BlackboardAsset);
 	AIController->RunBehaviorTree(BehaviorTree);
+	
+	AIController->GetBlackboardComponent()->SetValueAsBool(FName("LightReacting"), false);
+}
+
+void AFlashlightEnemy::SetLightReacting(bool bState)
+{
+	AIController->GetBlackboardComponent()->SetValueAsBool(FName("LightReacting"), bState);
+	UE_LOG(LogTemp, Warning, TEXT("Setting LightReacting for %s to %hs"), *GetName(), bState ? "True" : "False");
 }
 
 // Called when the game starts or when spawned
 void AFlashlightEnemy::BeginPlay()
 {
 	Super::BeginPlay();
-	
 }
 

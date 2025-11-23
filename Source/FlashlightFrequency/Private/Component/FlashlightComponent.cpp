@@ -2,6 +2,7 @@
 #include "FlashlightFrequencyCharacter.h"
 #include "Actor/FlashlightItem.h"
 #include "Camera/CameraComponent.h"
+#include "Character/FlashlightEnemy.h"
 #include "Components/CapsuleComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/KismetSystemLibrary.h"
@@ -156,28 +157,56 @@ void UFlashlightComponent::OnRep_FlashlightColor()
 /** Client-only: tracing and reveal logic */
 void UFlashlightComponent::HandleLocalTrace()
 {
-    AFlashlightItem* HitItem = TraceForItem();
-
-    // If we had an item revealed and it's no longer valid or not hit, hide it
+    AActor* HitItem = TraceForItem();
+    
+    if (CurrentHitEnemy && (HitItem != CurrentHitEnemy || HitItem == nullptr))
+    {
+        CurrentHitEnemy->SetLightReacting(false);
+        CurrentHitEnemy = nullptr;
+    }
+    
     if (CurrentRevealedItem && (HitItem != CurrentRevealedItem || HitItem == nullptr))
     {
         ServerSetItemVisibilityState(CurrentRevealedItem, false);
         CurrentRevealedItem = nullptr;
     }
-
-    if (HitItem)
+    
+    if (!HitItem)
+        return;
+    
+    if (AFlashlightEnemy* EnemyHit = Cast<AFlashlightEnemy>(HitItem))
     {
-        // Check color match on client
-        if (HitItem->VisibleWith == CurrentColor)
+        if (!CurrentHitEnemy)
         {
-            ServerSetItemVisibilityState(HitItem, true);
-            CurrentRevealedItem = HitItem;
-        }
-        else
+            EnemyHit->SetLightReacting(true);
+            CurrentHitEnemy = EnemyHit;
+        }else
         {
-            ServerSetItemVisibilityState(HitItem, false);
-            CurrentRevealedItem = nullptr;
+            if (CurrentHitEnemy != EnemyHit)
+            {
+                CurrentHitEnemy->SetLightReacting(false);
+                EnemyHit->SetLightReacting(true);
+                CurrentHitEnemy = EnemyHit;
+            }
         }
+    }
+    
+    if (AFlashlightItem* Item = Cast<AFlashlightItem>(HitItem))
+    {
+        if (Item)
+        {
+            // Check color match on client
+            if (Item->VisibleWith == CurrentColor)
+            {
+                ServerSetItemVisibilityState(Item, true);
+                CurrentRevealedItem = Item;
+            }
+            else
+            {
+                ServerSetItemVisibilityState(Item, false);
+                CurrentRevealedItem = nullptr;
+            }
+        }   
     }
 }
 
@@ -196,10 +225,19 @@ void UFlashlightComponent::SetPointingFlashlight(bool bState)
         Server_SetPointingFlashlight(bState);
     }
     
-    if (!bState && CurrentRevealedItem)
+    if (!bState)
     {
-        ServerSetItemVisibilityState(CurrentRevealedItem, false);
-        CurrentRevealedItem = nullptr;
+        if (CurrentHitEnemy)
+        {
+            CurrentHitEnemy->SetLightReacting(false);
+            CurrentHitEnemy = nullptr;
+        }
+        
+        if (CurrentRevealedItem)
+        {
+            ServerSetItemVisibilityState(CurrentRevealedItem, false);
+            CurrentRevealedItem = nullptr;
+        }
     }
     
     ApplyCameraSettings(bState);
@@ -226,7 +264,7 @@ void UFlashlightComponent::Server_SetReplicatedValues_Implementation(const FVect
     ReplicatedHandEffectorWS = HandWS;
 }
 
-AFlashlightItem* UFlashlightComponent::TraceForItem()
+AActor* UFlashlightComponent::TraceForItem()
 {
     UWorld* World = GetWorld();
     if (!World)
@@ -264,7 +302,7 @@ AFlashlightItem* UFlashlightComponent::TraceForItem()
     
 
     // -------- Pick best AFlashlightItem in the cone --------
-    AFlashlightItem* BestItem = nullptr;
+    AActor* BestItem = nullptr;
     float BestDistSq = TNumericLimits<float>::Max();
 
     for (const FHitResult& Hit : Hits)
@@ -274,17 +312,11 @@ AFlashlightItem* UFlashlightComponent::TraceForItem()
         {
             continue;
         }
-        
-        AFlashlightItem* Item = Cast<AFlashlightItem>(HitActor);
-        if (!Item)
-        {
-            continue;
-        }
 
         if (const float DistSq = (Hit.ImpactPoint - Start).SizeSquared(); DistSq < BestDistSq)
         {
             BestDistSq = DistSq;
-            BestItem   = Item;
+            BestItem   = HitActor;
         }
     }
 

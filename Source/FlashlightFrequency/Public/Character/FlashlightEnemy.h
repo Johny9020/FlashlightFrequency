@@ -18,6 +18,8 @@ public:
 	// Sets default values for this character's properties
 	AFlashlightEnemy();
 	virtual void PossessedBy(AController* NewController) override;
+	
+	void SetLightReacting(bool bState);
 
 protected:
 	// Called when the game starts or when spawned

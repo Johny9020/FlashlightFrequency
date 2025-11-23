@@ -9,6 +9,7 @@
 #include "FlashlightComponent.generated.h"
 
 
+class AFlashlightEnemy;
 class AFlashlightItem;
 class AFlashlightFrequencyCharacter;
 
@@ -73,9 +74,12 @@ public:
 
 protected:
 	UPROPERTY()
-	AFlashlightItem* CurrentRevealedItem = nullptr;
+	TObjectPtr<AFlashlightItem> CurrentRevealedItem = nullptr;
 
-	AFlashlightItem* TraceForItem();
+	AActor* TraceForItem();
+	
+	UPROPERTY(BlueprintReadOnly)
+	TObjectPtr<AFlashlightEnemy> CurrentHitEnemy = nullptr;
 
 	void HandleLocalTrace();
 
