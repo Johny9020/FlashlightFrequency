@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "GameFramework/GameMode.h"
 #include "GameFramework/GameModeBase.h"
 #include "FlashlightFrequencyGameMode.generated.h"
 
@@ -10,7 +11,7 @@
  *  Simple GameMode for a third person game
  */
 UCLASS(abstract)
-class AFlashlightFrequencyGameMode : public AGameModeBase
+class AFlashlightFrequencyGameMode : public AGameMode
 {
 	GENERATED_BODY()
 

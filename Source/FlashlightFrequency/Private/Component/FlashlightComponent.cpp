@@ -98,22 +98,16 @@ void UFlashlightComponent::SetFlashlightColor(EFlashlightColor NewColor)
     {
         return;
     }
-
-    // Clients call server to change color
+    
     if (OwnerPawn->IsLocallyControlled())
     {
         Server_SetFlashlightColor(NewColor);
-
-        // Optional: apply instantly for local responsiveness
         ApplyFlashlightColor(NewColor);
     }
-    else if (GetOwnerRole() == ROLE_Authority)
+    else if (OwnerPawn->HasAuthority())
     {
-        // In case the server wants to force-set it
         ApplyFlashlightColor(NewColor);
     }
-
-    GEngine->AddOnScreenDebugMessage(-1, 1, FColor::Emerald, FString::Printf(TEXT("Flashlight Color: %hhd"), NewColor));
 }
 
 AFlashlightFrequencyCharacter* UFlashlightComponent::GetOwnerPawn() const
@@ -157,9 +151,9 @@ void UFlashlightComponent::HandleLocalTrace()
     AFlashlightItem* HitItem = TraceForItem();
 
     // If we had an item revealed and it's no longer valid or not hit, hide it
-    if (CurrentRevealedItem && CurrentRevealedItem != HitItem)
+    if (CurrentRevealedItem && (HitItem != CurrentRevealedItem || HitItem == nullptr))
     {
-        CurrentRevealedItem->SetRevealVisible_Local(false);
+        CurrentRevealedItem->UpdateVisibility(false);
         CurrentRevealedItem = nullptr;
     }
 
@@ -169,13 +163,13 @@ void UFlashlightComponent::HandleLocalTrace()
         if (HitItem->VisibleWith == CurrentColor)
         {
             // Reveal for this client only
-            HitItem->SetRevealVisible_Local(true);
+            HitItem->UpdateVisibility(true);
             CurrentRevealedItem = HitItem;
         }
         else
         {
             // No match, ensure it's hidden locally
-            HitItem->SetRevealVisible_Local(false);
+            HitItem->UpdateVisibility(false);
             CurrentRevealedItem = nullptr;
         }
     }
@@ -194,6 +188,12 @@ void UFlashlightComponent::SetPointingFlashlight(bool bState)
     if (!GetOwnerPawn()->HasAuthority())
     {
         Server_SetPointingFlashlight(bState);
+    }
+    
+    if (!bState && CurrentRevealedItem)
+    {
+        CurrentRevealedItem->UpdateVisibility(bState);
+        CurrentRevealedItem = nullptr;
     }
     
     ApplyCameraSettings(bState);
