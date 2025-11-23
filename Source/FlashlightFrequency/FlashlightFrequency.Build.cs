@@ -18,12 +18,15 @@ public class FlashlightFrequency : ModuleRules
 			"StateTreeModule",
 			"GameplayStateTreeModule",
 			"UMG",
-			"Slate", 
-			"GameplayTasks", 
-			"GameplayTags"
+			"Slate",
 		});
 
-		PrivateDependencyModuleNames.AddRange(new string[] { });
+		PrivateDependencyModuleNames.AddRange(new string[]
+		{
+			"GameplayTasks", 
+			"GameplayTags",
+			"AIModule",
+		});
 
 		PublicIncludePaths.Add("FlashlightFrequency");
 		

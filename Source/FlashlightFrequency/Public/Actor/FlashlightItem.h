@@ -16,6 +16,8 @@ class FLASHLIGHTFREQUENCY_API AFlashlightItem : public AActor
 	
 public:	
 	AFlashlightItem();
+	
+	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Flashlight")
 	EFlashlightColor VisibleWith = EFlashlightColor::Red;
@@ -23,9 +25,19 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mesh")
 	TObjectPtr<UStaticMeshComponent> Mesh;
 	
-	void UpdateVisibility(bool bState) const;
+	void UpdateVisibility(bool bState);
+	
+	UFUNCTION(Server, Reliable)
+	void ServerUpdateVisibility(bool bState);
 
 protected:
 	virtual void BeginPlay() override;
+	
+private:	
+	UPROPERTY(ReplicatedUsing=OnRep_VisibilityState)
+	bool bVisibilityState;
+	
+	UFUNCTION()
+	void OnRep_VisibilityState();
 
 };

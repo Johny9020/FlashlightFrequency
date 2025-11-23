@@ -120,6 +120,14 @@ void UFlashlightComponent::OnRep_PointingFlashlight() const
     ApplyCameraSettings(bPointingFlashlight);
 }
 
+void UFlashlightComponent::ServerSetItemVisibilityState_Implementation(AFlashlightItem* Item, bool bState)
+{
+    if (!Item)
+        return;
+    
+    Item->UpdateVisibility(bState);
+}
+
 void UFlashlightComponent::Server_SetFlashlightColor_Implementation(EFlashlightColor NewColor)
 {
     ApplyFlashlightColor(NewColor);
@@ -153,7 +161,7 @@ void UFlashlightComponent::HandleLocalTrace()
     // If we had an item revealed and it's no longer valid or not hit, hide it
     if (CurrentRevealedItem && (HitItem != CurrentRevealedItem || HitItem == nullptr))
     {
-        CurrentRevealedItem->UpdateVisibility(false);
+        ServerSetItemVisibilityState(CurrentRevealedItem, false);
         CurrentRevealedItem = nullptr;
     }
 
@@ -162,14 +170,12 @@ void UFlashlightComponent::HandleLocalTrace()
         // Check color match on client
         if (HitItem->VisibleWith == CurrentColor)
         {
-            // Reveal for this client only
-            HitItem->UpdateVisibility(true);
+            ServerSetItemVisibilityState(HitItem, true);
             CurrentRevealedItem = HitItem;
         }
         else
         {
-            // No match, ensure it's hidden locally
-            HitItem->UpdateVisibility(false);
+            ServerSetItemVisibilityState(HitItem, false);
             CurrentRevealedItem = nullptr;
         }
     }
@@ -192,7 +198,7 @@ void UFlashlightComponent::SetPointingFlashlight(bool bState)
     
     if (!bState && CurrentRevealedItem)
     {
-        CurrentRevealedItem->UpdateVisibility(bState);
+        ServerSetItemVisibilityState(CurrentRevealedItem, false);
         CurrentRevealedItem = nullptr;
     }
     

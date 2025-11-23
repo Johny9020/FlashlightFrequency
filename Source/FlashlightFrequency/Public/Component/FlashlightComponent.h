@@ -97,6 +97,9 @@ protected:
 	
 	UFUNCTION()
 	void OnRep_PointingFlashlight() const;
+	
+	UFUNCTION(Server, Reliable)
+	void ServerSetItemVisibilityState(AFlashlightItem* Item, bool bState);
 
 private:
 	UPROPERTY(ReplicatedUsing=OnRep_PointingFlashlight, VisibleAnywhere, BlueprintReadWrite, Category = "Actions", meta = (AllowPrivateAccess = "true"))

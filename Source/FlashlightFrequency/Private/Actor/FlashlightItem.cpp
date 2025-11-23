@@ -2,6 +2,8 @@
 
 #include "Public/Actor/FlashlightItem.h"
 
+#include "Net/UnrealNetwork.h"
+
 // Sets default values
 AFlashlightItem::AFlashlightItem()
 {
@@ -17,10 +19,23 @@ AFlashlightItem::AFlashlightItem()
 	Mesh->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore);
 }
 
-void AFlashlightItem::UpdateVisibility(const bool bState) const
+void AFlashlightItem::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
 {
-	Mesh->SetVisibility(bState);
-	Mesh->SetCollisionResponseToChannel(ECC_Pawn, bState ? ECR_Block : ECR_Ignore);
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	
+	DOREPLIFETIME(ThisClass, bVisibilityState);
+}
+
+void AFlashlightItem::UpdateVisibility(const bool bState)
+{
+	if (!HasAuthority())
+	{
+		ServerUpdateVisibility(bState);
+		return;
+	}
+	
+	bVisibilityState = bState;
+	OnRep_VisibilityState();
 }
 
 // Called when the game starts or when spawned
@@ -28,5 +43,16 @@ void AFlashlightItem::BeginPlay()
 {
 	Super::BeginPlay();
 	Mesh->SetVisibility(false);
+}
+
+void AFlashlightItem::OnRep_VisibilityState()
+{
+	Mesh->SetVisibility(bVisibilityState);
+	Mesh->SetCollisionResponseToChannel(ECC_Pawn, !bVisibilityState ? ECR_Block : ECR_Ignore);
+}
+
+void AFlashlightItem::ServerUpdateVisibility_Implementation(bool bState)
+{
+	UpdateVisibility(bState);
 }
 
