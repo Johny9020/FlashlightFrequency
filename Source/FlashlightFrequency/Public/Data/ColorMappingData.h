@@ -12,6 +12,8 @@ struct FColorMapping
 {
 	GENERATED_BODY()
 	
+	FColorMapping() : Color(EFlashlightColor::UV), AssignedColor(FLinearColor::White) {}
+	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	EFlashlightColor Color;
 	
