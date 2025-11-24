@@ -121,6 +121,13 @@ void UFlashlightComponent::OnRep_PointingFlashlight() const
     ApplyCameraSettings(bPointingFlashlight);
 }
 
+void UFlashlightComponent::Server_SetAIFlashlightReactState_Implementation(AFlashlightEnemy* AIEnemy, bool bState)
+{
+    if (!AIEnemy)
+        return;
+    AIEnemy->SetLightReacting(bState);
+}
+
 void UFlashlightComponent::ServerSetItemVisibilityState_Implementation(AFlashlightItem* Item, bool bState)
 {
     if (!Item)
@@ -161,7 +168,7 @@ void UFlashlightComponent::HandleLocalTrace()
     
     if (CurrentHitEnemy && (HitItem != CurrentHitEnemy || HitItem == nullptr))
     {
-        CurrentHitEnemy->SetLightReacting(false);
+        Server_SetAIFlashlightReactState(CurrentHitEnemy, false);
         CurrentHitEnemy = nullptr;
     }
     
@@ -178,14 +185,14 @@ void UFlashlightComponent::HandleLocalTrace()
     {
         if (!CurrentHitEnemy)
         {
-            EnemyHit->SetLightReacting(true);
+            Server_SetAIFlashlightReactState(EnemyHit, true);
             CurrentHitEnemy = EnemyHit;
         }else
         {
             if (CurrentHitEnemy != EnemyHit)
             {
-                CurrentHitEnemy->SetLightReacting(false);
-                EnemyHit->SetLightReacting(true);
+                Server_SetAIFlashlightReactState(CurrentHitEnemy, false);
+                Server_SetAIFlashlightReactState(EnemyHit, true);
                 CurrentHitEnemy = EnemyHit;
             }
         }
@@ -229,7 +236,7 @@ void UFlashlightComponent::SetPointingFlashlight(bool bState)
     {
         if (CurrentHitEnemy)
         {
-            CurrentHitEnemy->SetLightReacting(false);
+            Server_SetAIFlashlightReactState(CurrentHitEnemy, false);
             CurrentHitEnemy = nullptr;
         }
         
@@ -282,7 +289,7 @@ AActor* UFlashlightComponent::TraceForItem()
     const FVector Start = OwnerPawn->GetCapsuleComponent()->GetComponentLocation();
     const FRotator ComponentRotation = OwnerPawn->GetFollowCamera()->GetComponentRotation();
     const FRotator DirRot = FRotator(ComponentRotation.Pitch + 5, ComponentRotation.Yaw, ComponentRotation.Roll);
-    const FVector End = Start + (DirRot.Quaternion().GetForwardVector() * 800.f);
+    const FVector End = Start + (DirRot.Quaternion().GetForwardVector() * TraceDistance);
 
     LocalFlashlightTargetWS = End;
 

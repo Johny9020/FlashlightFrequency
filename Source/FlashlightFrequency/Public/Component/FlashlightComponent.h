@@ -38,7 +38,7 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Flashlight")
 	void SetFlashlightColor(EFlashlightColor NewColor);
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Flashlight")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Tracing")
 	float ConeRadius = 30.f; // radius of the sweep
 	
 	void ApplyCameraSettings(bool bState) const;
@@ -104,8 +104,14 @@ protected:
 	
 	UFUNCTION(Server, Reliable)
 	void ServerSetItemVisibilityState(AFlashlightItem* Item, bool bState);
+	
+	UFUNCTION(Server, Reliable)
+	void Server_SetAIFlashlightReactState(AFlashlightEnemy* AIEnemy, bool bState);
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Tracing")
+	float TraceDistance = 800.f;
 
 private:
-	UPROPERTY(ReplicatedUsing=OnRep_PointingFlashlight, VisibleAnywhere, BlueprintReadWrite, Category = "Actions", meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(ReplicatedUsing=OnRep_PointingFlashlight, BlueprintReadWrite, Category = "Actions", meta = (AllowPrivateAccess = "true"))
 	bool bPointingFlashlight;
 };
